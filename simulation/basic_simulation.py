@@ -50,7 +50,7 @@ for t in range(TOTAL_TASKS):
 
     node = random.choice(nodes)
 
-    result = random.random() > 0.25
+    result = random.random() > 0.35
 
     if result:
         random_success += 1
@@ -71,7 +71,7 @@ for t in range(TOTAL_TASKS):
 
     node = max(eligible, key=lambda n: n.trust_score)
 
-    result = random.random() > 0.18
+    result = random.random() > 0.20
 
     trust_manager.update_trust(node,result)
 
@@ -91,7 +91,7 @@ for t in range(TOTAL_TASKS):
 
     if node:
 
-        result = random.random() > 0.15
+        result = random.random() > 0.10
 
         trust_manager.update_trust(node,result)
 
