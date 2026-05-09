@@ -22,7 +22,6 @@ class PlacementController:
         # AI predictor
         self.predictor = ReliabilityPredictor()
 
-
     def request_placement(self, nodes):
 
         """
@@ -42,7 +41,6 @@ class PlacementController:
 
             return None, "CRITICAL FAILURE: All nodes are untrusted (<60)."
 
-
         # --------------------------------
         # 2. RANK NODES
         # --------------------------------
@@ -51,21 +49,35 @@ class PlacementController:
 
         for node in eligible_nodes:
 
-            # Reliability
-            reliability = node.success_count / node.total_tasks if node.total_tasks > 0 else 0
+            # Simulate dynamic runtime conditions
+            node.simulate_runtime_state()
 
-            # Resource score (simulated)
-            resource_score = 1.0
+            # Reliability
+            reliability = (
+                node.success_count / node.total_tasks
+                if node.total_tasks > 0 else 0
+            )
+
+            # Dynamic resource score
+            resource_score = node.get_resource_score()
 
             # Failure history
             failures = node.failure_count
 
-            # AI prediction (0 = reliable, 1 = failure)
-            prediction = self.predictor.predict(node.trust_score, reliability, failures)
+            # AI prediction
+            # (0 = reliable, 1 = likely failure)
+            prediction = self.predictor.predict(
+                node.trust_score,
+                reliability,
+                failures
+            )
 
             predicted_reliability = 1 - prediction
 
-            # Final placement score
+            # --------------------------------
+            # FINAL PLACEMENT SCORE
+            # --------------------------------
+
             score = (
                 self.w1 * (node.trust_score / 100.0)
                 + self.w2 * reliability
@@ -75,7 +87,6 @@ class PlacementController:
 
             ranked_nodes.append((node, score))
 
-
         # --------------------------------
         # 3. SELECT BEST NODE
         # --------------------------------
@@ -84,12 +95,15 @@ class PlacementController:
 
         best_node, final_score = ranked_nodes[0]
 
-
         # --------------------------------
         # 4. RECORD ON BLOCKCHAIN
         # --------------------------------
 
-        txn_data = f"DEPLOY_SUCCESS: Assigned to {best_node.node_id} (Score: {final_score:.2f})"
+        txn_data = (
+            f"DEPLOY_SUCCESS: Assigned to "
+            f"{best_node.node_id} "
+            f"(Score: {final_score:.2f})"
+        )
 
         self.blockchain.add_block(txn_data)
 
