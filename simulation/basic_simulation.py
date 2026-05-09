@@ -116,38 +116,56 @@ def retrain_model():
     df_new = pd.DataFrame(new_rows)
 
     if os.path.exists(DATASET_PATH):
-        old_df       = pd.read_csv(DATASET_PATH)
-        df_combined  = pd.concat([old_df, df_new], ignore_index=True)
-    else:
-        df_combined  = df_new
+        old_df = pd.read_csv(DATASET_PATH)
 
-    df_combined.to_csv(DATASET_PATH, index=False)
-    last_saved = len(runtime_rows)
-
-    if len(df_combined) < 20:
-        print(f"[RETRAIN] Only {len(df_combined)} samples — skipping.\n")
-        return
-
-    try:
-        X = df_combined.drop("failure_risk", axis=1)
-        y = df_combined["failure_risk"]
-
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42
+        df_combined = pd.concat(
+            [old_df, df_new],
+            ignore_index=True
         )
 
-        model = RandomForestClassifier(n_estimators=100, random_state=42)
-        model.fit(X_train, y_train)
-        joblib.dump(model, MODEL_PATH)
+    else:
+        df_combined = df_new
 
-        # Reload predictor in placement controller
-        placement_controller.predictor = ReliabilityPredictor()
+    # --------------------------------
+    # SLIDING WINDOW RETRAINING
+    # Keep only recent runtime behavior
+    # --------------------------------
 
-        accuracy = model.score(X_test, y_test)
-        print(f"[RETRAIN] Done — Samples: {len(df_combined)} | Accuracy: {accuracy:.2%}\n")
+    WINDOW_SIZE = 1000
 
-    except Exception as e:
-        print(f"[RETRAIN] Failed: {e}\n")
+    if len(df_combined) > WINDOW_SIZE:
+
+        df_combined = df_combined.tail(
+            WINDOW_SIZE
+        ).reset_index(drop=True)
+
+        df_combined.to_csv(DATASET_PATH, index=False)
+        last_saved = len(runtime_rows)
+
+        if len(df_combined) < 20:
+            print(f"[RETRAIN] Only {len(df_combined)} samples — skipping.\n")
+            return
+
+        try:
+            X = df_combined.drop("failure_risk", axis=1)
+            y = df_combined["failure_risk"]
+
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=0.2, random_state=42
+            )
+
+            model = RandomForestClassifier(n_estimators=100, random_state=42)
+            model.fit(X_train, y_train)
+            joblib.dump(model, MODEL_PATH)
+
+            # Reload predictor in placement controller
+            placement_controller.predictor = ReliabilityPredictor()
+
+            accuracy = model.score(X_test, y_test)
+            print(f"[RETRAIN] Done — Samples: {len(df_combined)} | Accuracy: {accuracy:.2%}\n")
+
+        except Exception as e:
+            print(f"[RETRAIN] Failed: {e}\n")
 
 
 # --------------------------------
