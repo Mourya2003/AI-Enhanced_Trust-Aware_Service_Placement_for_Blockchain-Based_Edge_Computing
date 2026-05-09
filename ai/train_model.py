@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
+import os
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
@@ -9,10 +10,22 @@ from sklearn.metrics import accuracy_score, confusion_matrix
 
 
 # --------------------------------
-# LOAD DATASET
+# CREATE GRAPH DIRECTORY
 # --------------------------------
 
-df = pd.read_csv("datasets/node_dataset.csv")
+os.makedirs("graphs", exist_ok=True)
+
+
+# --------------------------------
+# LOAD RUNTIME DATASET
+# --------------------------------
+
+df = pd.read_csv("datasets/runtime_dataset.csv")
+
+
+# --------------------------------
+# FEATURES & LABELS
+# --------------------------------
 
 X = df.drop("failure_risk", axis=1)
 
@@ -20,7 +33,7 @@ y = df["failure_risk"]
 
 
 # --------------------------------
-# TRAIN TEST SPLIT
+# SPLIT DATA
 # --------------------------------
 
 X_train, X_test, y_train, y_test = train_test_split(
@@ -44,21 +57,21 @@ model.fit(X_train, y_train)
 
 
 # --------------------------------
-# SAVE TRAINED MODEL
+# SAVE MODEL
 # --------------------------------
 
 joblib.dump(model, "ai/trained_model.pkl")
 
 
 # --------------------------------
-# PREDICTIONS
+# EVALUATION
 # --------------------------------
 
 pred = model.predict(X_test)
 
 accuracy = accuracy_score(y_test, pred)
 
-print("Model Accuracy:", accuracy)
+print("\nModel Accuracy:", accuracy)
 
 
 # --------------------------------
@@ -82,7 +95,7 @@ plt.xlabel("Predicted")
 
 plt.ylabel("Actual")
 
-plt.savefig("confusion_matrix.png")
+plt.savefig("graphs/confusion_matrix.png")
 
 
 # --------------------------------
@@ -91,7 +104,7 @@ plt.savefig("confusion_matrix.png")
 
 importances = model.feature_importances_
 
-plt.figure(figsize=(6, 4))
+plt.figure(figsize=(7, 4))
 
 sns.barplot(
     x=importances,
@@ -100,7 +113,7 @@ sns.barplot(
 
 plt.title("Feature Importance")
 
-plt.savefig("feature_importance.png")
+plt.savefig("graphs/feature_importance.png")
 
 
 # --------------------------------
@@ -111,5 +124,5 @@ print("\nModel saved:")
 print("ai/trained_model.pkl")
 
 print("\nGraphs saved:")
-print("confusion_matrix.png")
-print("feature_importance.png")
+print("graphs/confusion_matrix.png")
+print("graphs/feature_importance.png")

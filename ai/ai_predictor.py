@@ -1,12 +1,11 @@
 import joblib
-import numpy as np
+import pandas as pd
 
 
 class ReliabilityPredictor:
 
     def __init__(self):
 
-        # Load trained model
         self.model = joblib.load(
             "ai/trained_model.pkl"
         )
@@ -18,14 +17,14 @@ class ReliabilityPredictor:
         failures
     ):
 
-        data = np.array([[
-            trust,
-            success_rate,
-            failures,
-            50,   # latency placeholder
-            50,   # cpu placeholder
-            50    # memory placeholder
-        ]])
+        data = pd.DataFrame([{
+            "trust_score": trust,
+            "success_rate": success_rate,
+            "failures": failures,
+            "latency": 50,
+            "cpu_usage": 50,
+            "memory_usage": 50
+        }])
 
         prediction = self.model.predict(data)[0]
 

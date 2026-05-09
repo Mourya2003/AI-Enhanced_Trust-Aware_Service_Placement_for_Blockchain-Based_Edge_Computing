@@ -204,10 +204,19 @@ for t in range(TOTAL_TASKS):
 
 
 # --------------------------------
-# SAVE RUNTIME DATASET
+# SAVE / APPEND RUNTIME DATASET
 # --------------------------------
 
 df = pd.DataFrame(runtime_rows)
+
+if os.path.exists(DATASET_PATH):
+
+    old_df = pd.read_csv(DATASET_PATH)
+
+    df = pd.concat(
+        [old_df, df],
+        ignore_index=True
+    )
 
 df.to_csv(DATASET_PATH, index=False)
 
