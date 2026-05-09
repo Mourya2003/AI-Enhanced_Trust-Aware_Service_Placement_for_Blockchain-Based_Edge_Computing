@@ -4,19 +4,25 @@ import time
 class TrustManager:
     """
     Adaptive Trust Management System
+
     Formula:
     Ti = alpha*S + beta*A - gamma*F + delta*R
+
+    S = Success Reward
+    A = Activity / Recency Factor
+    F = Failure Penalty
+    R = Reliability
     """
 
     def __init__(self):
 
         # --------------------------------
-        # ADAPTIVE TRUST PARAMETERS
+        # TRUST PARAMETERS
         # --------------------------------
 
         self.alpha = 2.0     # Success reward
 
-        self.beta = 1.0      # Recency weight
+        self.beta = 1.0      # Recency/activity weight
 
         self.gamma = 3.0     # Failure penalty
 
@@ -65,7 +71,8 @@ class TrustManager:
         if is_success:
 
             trust_gain = (
-                (self.alpha * recency_factor)
+                (self.alpha * 1.0)
+                + (self.beta * recency_factor)
                 + (self.delta * reliability)
             )
 
