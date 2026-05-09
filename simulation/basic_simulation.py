@@ -1,9 +1,20 @@
 import random
+import pandas as pd
+import os
 
 from components.blockchain import Blockchain
 from components.edge_node import EdgeNode
 from components.trust_manager import TrustManager
 from components.placement_controller import PlacementController
+
+
+# --------------------------------
+# DATASET FILE
+# --------------------------------
+
+DATASET_PATH = "datasets/runtime_dataset.csv"
+
+os.makedirs("datasets", exist_ok=True)
 
 
 # --------------------------------
@@ -48,7 +59,14 @@ for i in range(6):
     nodes.append(node)
 
 
-TOTAL_TASKS = 50
+TOTAL_TASKS = 100
+
+
+# --------------------------------
+# DATASET STORAGE
+# --------------------------------
+
+runtime_rows = []
 
 
 # --------------------------------
@@ -57,41 +75,29 @@ TOTAL_TASKS = 50
 
 def execute_task(node):
 
-    """
-    Simulates realistic task execution behavior.
-    """
-
     reliability = (
         node.success_count / node.total_tasks
         if node.total_tasks > 0 else 0.5
     )
 
     cpu_penalty = node.cpu_usage / 100
+
     memory_penalty = node.memory_usage / 100
+
     latency_penalty = node.latency / 200
 
     trust_factor = node.trust_score / 100
-
-    # --------------------------------
-    # RESOURCE AWARENESS
-    # --------------------------------
 
     resource_factor = (
         (1 - cpu_penalty)
         + (1 - memory_penalty)
     ) / 2
 
-    # --------------------------------
-    # SUCCESS PROBABILITY
-    # --------------------------------
-
     success_probability = (
         0.35 * trust_factor
         + 0.25 * reliability
         + 0.40 * resource_factor
     )
-
-    # Mild latency penalty
 
     success_probability -= (
         0.05 * latency_penalty
@@ -102,7 +108,30 @@ def execute_task(node):
         min(0.95, success_probability)
     )
 
-    return random.random() < success_probability
+    result = random.random() < success_probability
+
+    # --------------------------------
+    # STORE RUNTIME DATA
+    # --------------------------------
+
+    runtime_rows.append({
+
+        "trust_score": node.trust_score,
+
+        "success_rate": reliability,
+
+        "failures": node.failure_count,
+
+        "latency": node.latency,
+
+        "cpu_usage": node.cpu_usage,
+
+        "memory_usage": node.memory_usage,
+
+        "failure_risk": 0 if result else 1
+    })
+
+    return result
 
 
 # --------------------------------
@@ -175,6 +204,15 @@ for t in range(TOTAL_TASKS):
 
 
 # --------------------------------
+# SAVE RUNTIME DATASET
+# --------------------------------
+
+df = pd.DataFrame(runtime_rows)
+
+df.to_csv(DATASET_PATH, index=False)
+
+
+# --------------------------------
 # RESULTS
 # --------------------------------
 
@@ -209,7 +247,7 @@ print(
 )
 
 # --------------------------------
-# BLOCKCHAIN SIZE
+# BLOCKCHAIN RESULTS
 # --------------------------------
 
 print("\nBlockchain Size:", len(blockchain.chain))
@@ -217,3 +255,15 @@ print("\nBlockchain Size:", len(blockchain.chain))
 print("\nLatest Block Data:")
 
 print(blockchain.chain[-1].data)
+
+# --------------------------------
+# DATASET OUTPUT
+# --------------------------------
+
+print("\nRuntime Dataset Generated:")
+
+print(DATASET_PATH)
+
+print("\nTotal Runtime Samples:")
+
+print(len(df))
